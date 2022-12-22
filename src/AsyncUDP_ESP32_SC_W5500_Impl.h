@@ -7,11 +7,12 @@
   Built by Khoi Hoang https://github.com/khoih-prog/AsyncUDP_ESP32_SC_W5500
   Licensed under GPLv3 license
 
-  Version: 2.0.0
+  Version: 2.1.0
 
   Version Modified By   Date      Comments
   ------- -----------  ---------- -----------
   2.0.0   K Hoang      18/12/2022 Initial coding for ESP32_SC_W5500. Bump up version to v2.0.0 to sync with AsyncUDP v2.0.0
+  2.1.0   K Hoang      21/12/2022 Add support to ESP32_S2/C3 using LwIP W5500 Ethernet
  *****************************************************************************************************************************/
 
 #pragma once
@@ -19,20 +20,26 @@
 #ifndef ASYNC_UDP_ESP32_SC_W5500_IMPL_H
 #define ASYNC_UDP_ESP32_SC_W5500_IMPL_H
 
+////////////////////////////////////////////////
+
 extern "C"
 {
-#include "lwip/opt.h"
-#include "lwip/inet.h"
-#include "lwip/udp.h"
-#include "lwip/igmp.h"
-#include "lwip/ip_addr.h"
-#include "lwip/mld6.h"
-#include "lwip/prot/ethernet.h"
-#include <esp_err.h>
-#include <esp_wifi.h>
+	#include "lwip/opt.h"
+	#include "lwip/inet.h"
+	#include "lwip/udp.h"
+	#include "lwip/igmp.h"
+	#include "lwip/ip_addr.h"
+	#include "lwip/mld6.h"
+	#include "lwip/prot/ethernet.h"
+	#include <esp_err.h>
+	#include <esp_wifi.h>
 }
 
+////////////////////////////////////////////////
+
 #include "lwip/priv/tcpip_priv.h"
+
+////////////////////////////////////////////////
 
 /*
   typedef int32_t esp_err_t;
@@ -57,6 +64,8 @@ extern "C"
   #define ESP_ERR_MESH_BASE           0x4000  // Starting number of MESH error codes
 */
 
+////////////////////////////////////////////////
+
 typedef struct
 {
   struct tcpip_api_call_data call;
@@ -68,6 +77,8 @@ typedef struct
   err_t err;
 } udp_api_call_t;
 
+////////////////////////////////////////////////
+
 static err_t _udp_connect_api(struct tcpip_api_call_data *api_call_msg)
 {
   udp_api_call_t * msg = (udp_api_call_t *)api_call_msg;
@@ -77,6 +88,8 @@ static err_t _udp_connect_api(struct tcpip_api_call_data *api_call_msg)
 
   return msg->err;
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_connect(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
 {
@@ -91,6 +104,8 @@ static err_t _udp_connect(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port
   return msg.err;
 }
 
+////////////////////////////////////////////////
+
 static err_t _udp_disconnect_api(struct tcpip_api_call_data *api_call_msg)
 {
   udp_api_call_t * msg = (udp_api_call_t *)api_call_msg;
@@ -102,12 +117,16 @@ static err_t _udp_disconnect_api(struct tcpip_api_call_data *api_call_msg)
   return msg->err;
 }
 
+////////////////////////////////////////////////
+
 static void  _udp_disconnect(struct udp_pcb *pcb)
 {
   udp_api_call_t msg;
   msg.pcb = pcb;
   tcpip_api_call(_udp_disconnect_api, (struct tcpip_api_call_data*)&msg);
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_remove_api(struct tcpip_api_call_data *api_call_msg)
 {
@@ -120,12 +139,16 @@ static err_t _udp_remove_api(struct tcpip_api_call_data *api_call_msg)
   return msg->err;
 }
 
+////////////////////////////////////////////////
+
 static void  _udp_remove(struct udp_pcb *pcb)
 {
   udp_api_call_t msg;
   msg.pcb = pcb;
   tcpip_api_call(_udp_remove_api, (struct tcpip_api_call_data*)&msg);
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_bind_api(struct tcpip_api_call_data *api_call_msg)
 {
@@ -136,6 +159,8 @@ static err_t _udp_bind_api(struct tcpip_api_call_data *api_call_msg)
 
   return msg->err;
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_bind(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
 {
@@ -150,6 +175,8 @@ static err_t _udp_bind(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
   return msg.err;
 }
 
+////////////////////////////////////////////////
+
 static err_t _udp_sendto_api(struct tcpip_api_call_data *api_call_msg)
 {
   udp_api_call_t * msg = (udp_api_call_t *)api_call_msg;
@@ -159,6 +186,8 @@ static err_t _udp_sendto_api(struct tcpip_api_call_data *api_call_msg)
 
   return msg->err;
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_sendto(struct udp_pcb *pcb, struct pbuf *pb, const ip_addr_t *addr, u16_t port)
 {
@@ -174,6 +203,8 @@ static err_t _udp_sendto(struct udp_pcb *pcb, struct pbuf *pb, const ip_addr_t *
   return msg.err;
 }
 
+////////////////////////////////////////////////
+
 static err_t _udp_sendto_if_api(struct tcpip_api_call_data *api_call_msg)
 {
   udp_api_call_t * msg = (udp_api_call_t *)api_call_msg;
@@ -183,6 +214,8 @@ static err_t _udp_sendto_if_api(struct tcpip_api_call_data *api_call_msg)
 
   return msg->err;
 }
+
+////////////////////////////////////////////////
 
 static err_t _udp_sendto_if(struct udp_pcb *pcb, struct pbuf *pb, const ip_addr_t *addr, u16_t port,
                             struct netif *netif)
@@ -212,8 +245,12 @@ typedef struct
   struct netif * netif;
 } lwip_event_packet_t;
 
+////////////////////////////////////////////////
+
 static xQueueHandle _udp_queue;
 static volatile TaskHandle_t _udp_task_handle = NULL;
+
+////////////////////////////////////////////////
 
 static void _udp_task(void *pvParameters)
 {
@@ -237,6 +274,8 @@ static void _udp_task(void *pvParameters)
   _udp_task_handle = NULL;
   vTaskDelete(NULL);
 }
+
+////////////////////////////////////////////////
 
 static bool _udp_task_start()
 {
@@ -263,6 +302,8 @@ static bool _udp_task_start()
 
   return true;
 }
+
+////////////////////////////////////////////////
 
 static bool _udp_task_post(void *arg, udp_pcb *pcb, pbuf *pb, const ip_addr_t *addr, uint16_t port, struct netif *netif)
 {
@@ -295,6 +336,8 @@ static bool _udp_task_post(void *arg, udp_pcb *pcb, pbuf *pb, const ip_addr_t *a
   return true;
 }
 
+////////////////////////////////////////////////
+
 static void _udp_recv(void *arg, udp_pcb *pcb, pbuf *pb, const ip_addr_t *addr, uint16_t port)
 {
   while (pb != NULL)
@@ -309,6 +352,8 @@ static void _udp_recv(void *arg, udp_pcb *pcb, pbuf *pb, const ip_addr_t *addr, 
     }
   }
 }
+
+////////////////////////////////////////////////
 
 /*
   static bool _udp_task_stop()
